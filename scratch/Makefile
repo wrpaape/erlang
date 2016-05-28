@@ -4,4 +4,4 @@ all: *.erl
 	erlc $^
 
 clean:
-	$(RM) *.beam
+	$(RM) *.beam *.dump
