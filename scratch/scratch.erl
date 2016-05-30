@@ -1,5 +1,13 @@
 -module(scratch).
--export([tuple_to_list/1, quick_sort/2, my_spawn/3, loop/2]).
+-export([tuple_to_list/1, quick_sort/2, my_spawn/3, print_interval/2,
+         bucket_start/0, bucket_listen/0, bucket_put/2, bucket_get/1]).
+-define(RPC(Request), ?RPC(?MODULE, Request)).
+-define(RPC(Process, Request),
+        Process ! {self(), Request},
+        receive
+          {Process, Reply} -> Reply
+        end).
+
 
 
 -spec scratch:tuple_to_list(Tuple) -> List when
@@ -27,6 +35,12 @@ quick_sort(Compare,  [Pivot | Rem]) ->
 quick_sort(_Compare, []) -> [].
 
 
+
+-spec scratch:my_spawn(Mod, Func, Args) -> ok when
+    Mod  :: atom(),
+    Func :: atom(),
+    Args :: [any()].
+
 my_spawn(Mod, Func, Args) ->
   TimeStart = erlang:timestamp(),
   {Pid, Ref} = spawn_monitor(Mod, Func, Args),
@@ -37,8 +51,48 @@ my_spawn(Mod, Func, Args) ->
                [Ref, Pid, Why, timer:now_diff(erlang:timestamp(), TimeStart)])
   end.
 
-loop(Sleep, Msg) ->
+
+
+-spec scratch:print_interval(Sleep, Msg) -> none() when
+    Sleep :: infinity | non_neg_integer(),
+    Msg   :: any().
+
+print_interval(Sleep, Msg) ->
   timer:sleep(Sleep),
   io:format("~p~n", [Msg]),
-  loop(Sleep, Msg).
+  print_interval(Sleep, Msg).
 
+
+
+-spec scratch:bucket_start() -> true.
+
+bucket_start() ->
+  register(?MODULE,
+           spawn(?MODULE, bucket_listen, [])).
+
+-spec scratch:bucket_put(Key, Value) -> Reply when
+    Key   :: any(),
+    Value :: any(),
+    Reply :: any().
+
+bucket_put(Key, Value) -> ?RPC({put, Key, Value}).
+
+
+-spec scratch:bucket_get(Key) -> Reply when
+    Key   :: any(),
+    Reply :: any().
+
+bucket_get(Key) -> ?RPC({get, Key}).
+
+
+bucket_listen() ->
+  receive
+    {From, {put, Key, Value}} ->
+      put(Key, Value),
+      From ! {?MODULE, true},
+      bucket_listen();
+
+    {From, {get, Key}}        ->
+      From ! {?MODULE, get(Key)},
+      bucket_listen()
+  end.
