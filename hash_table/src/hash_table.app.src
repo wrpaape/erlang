@@ -1,0 +1,12 @@
+{application, hash_table,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { hash_table_app, []}},
+  {env, []}
+ ]}.
