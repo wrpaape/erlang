@@ -24,12 +24,12 @@
          code_change/3]).
 
 -define(SERVER,      ?MODULE).
--define(APPLICATION, hash_table_app).
+% -define(APPLICATION, ?MODULE).
 
 -record(state, {buckets     = undefined :: array:array(),
                 size        = 0         :: non_neg_integer(),
                 capacity    = 0         :: non_neg_integer(),
-                load_factor = 0.0       :: float() >= 0.0,
+                load_factor = 0.0       :: float(),
                 collisions  = 0         :: non_neg_integer()}).
 
 %% Types
@@ -76,15 +76,16 @@ state() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-  InitialCapacity = application:get_env(?APPLICATION,
-                                        default_initial_capacity),
+  {ok, InitialCapacity} = application:get_env(default_initial_capacity),
+
+  % io:format("INITIAL CAPACITY: ~p~n", InitialCapacity),
 
   Buckets = array:new([{size, InitialCapacity},
                        {fixed, true},
                        {default, []}]),
 
   {ok, #state{buckets  = Buckets,
-              capacity = InitialCapacity}}
+              capacity = InitialCapacity}}.
 
 
 %%--------------------------------------------------------------------
@@ -101,8 +102,11 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+-spec hash_table:handle_call(state, _From, State) -> {reply, State, State} when
+    State :: hash_table().
+
 handle_call(state, _From, State) ->
-        {reply, State, State}.
+  {reply, State, State}.
 
 %%--------------------------------------------------------------------
 %% @private
