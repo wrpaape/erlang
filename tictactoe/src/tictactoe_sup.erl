@@ -8,8 +8,9 @@
 %% Supervisor callbacks
 -export([init/1]).
 
-%% Helper macro for declaring children of supervisor
--define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
+-define(CLI,      tictactoe_cli)
+-define(BOARD,    tictactoe_board)
+-define(COMPUTER, tictactoe_computer)
 
 %% ===================================================================
 %% API functions
@@ -23,5 +24,42 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    {ok, { {one_for_one, 5, 10}, []} }.
+  RestartStrategy = one_for_one,
+  MaxRestarts     = 1000,
+  MaxSecondsBetweenRestarts = 3600,
 
+  SupFlags = {RestartStrategy,
+              MaxRestarts,
+              MaxSecondsBetweenRestarts},
+
+  Restart  = permanent,
+  Shutdown = 2000,
+
+
+  CLIMFA = {?CLI,
+            start_link,
+            []},
+
+  CLI = {?CLI,
+         CLIMFA,
+         Restart,
+         Shutdown,
+         supervisor,
+         [?CLI]}, 
+
+  BoardMFA = {?BOARD,
+              start_link,
+              []},
+
+  Board = {?BOARD,
+           BoardMFA,
+           Restart,
+           Shutdown,
+           worker,
+           [?BOARD]},
+
+
+  ChildSpec = [CLI,
+               Board],
+
+  {ok, {SupFlags, ChildSpec}}.
