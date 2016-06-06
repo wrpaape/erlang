@@ -1,0 +1,14 @@
+{application, tictactoe,
+ [{description, ""},
+
+  {vsn, "1.0.0"},
+
+  {registered, []},
+
+  {applications, [kernel,
+                  stdlib,
+                  sasl]},
+
+  {mod, {tictactoe_app, []}},
+
+  {env, []}]}.
